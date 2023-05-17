@@ -6,12 +6,14 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/wihdi/go-auth-jwt/auth"
+
 )
 
-var jwtKey = []byte("SECRET_KEY_BEBAS")
+var jwtKey = ("SECRET_KEY_BEBAS")
 
 type User struct {
-	ID int `json:id`
+	ID 			int `json:id`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -24,7 +26,7 @@ func main() {
 	r.POST("/auth/login",loginHandler)
 	userRouter:=r.Group("api/vi/users")
 	//midlerware
-	userRouter.Use(authMiddleware())
+	userRouter.Use(auth.AuthMiddleware(jwtKey))
 
 	//set up GET
 	userRouter.GET("/:id/profile", profileHanlder)
@@ -75,27 +77,3 @@ c.JSON(http.StatusOK, gin.H {"username" :username})
 
 }
 
-func authMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tokenString := c.GetHeader("Authorization")
-		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
-
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
-
-		claims := token.Claims.(jwt.MapClaims)
-		c.Set("claims", claims)
-		c.Next()
-	}
-}
